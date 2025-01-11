@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Tabster",
+  "version": "1.0",
+  "description": "Rename your tabs so you can find it again!",
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+} 
