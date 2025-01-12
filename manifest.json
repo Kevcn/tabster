@@ -2,19 +2,27 @@
   "manifest_version": 3,
   "name": "Tabster",
   "version": "1.0",
-  "description": "Rename your tabs so you can find it again!",
+  "description": "Rename your tabs and add notes for better organization",
   "permissions": [
-    "tabs",
+    "activeTab",
     "storage",
-    "scripting",
     "contextMenus",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "scripting"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
   },
   "background": {
     "service_worker": "background.js"

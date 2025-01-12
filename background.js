@@ -2,10 +2,9 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'renameTab',
-    title: 'Rename Tab',
+    title: 'Tabster',
     type: 'normal',
-    contexts: ['page'],
-    documentUrlPatterns: ['<all_urls>']
+    contexts: ['all']
   });
 });
 

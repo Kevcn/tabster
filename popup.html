@@ -1,15 +1,97 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tabster</title>
-  <link rel="stylesheet" type="text/css" href="styles.css">
+  <title>Tab Renamer</title>
+  <style>
+    body {
+      margin: 0;
+      width: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      background-color: #ffffff;
+      padding: 16px 20px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+    }
+    .divider {
+      width: 100%;
+      height: 1px;
+      background-color: #eee;
+      margin: 12px 0;
+    }
+    .label {
+      font-size: 16px;
+      margin-right: 12px;
+      min-width: 100px;
+      color: #333;
+      font-weight: 500;
+    }
+    .input {
+      width: 320px;
+      padding: 2px;
+      border: none;
+      font-size: 16px;
+      outline: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #333;
+    }
+    .notes {
+      width: 320px;
+      padding: 2px;
+      border: none;
+      font-size: 14px;
+      outline: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #666;
+      height: 200px;
+      resize: none;
+      overflow-y: auto;
+      background-color: #ffffff;
+    }
+    .notes-row {
+      align-items: flex-start;
+      padding-top: 4px;
+    }
+    .notes-row .label {
+      padding-top: 2px;
+    }
+    /* Webkit scrollbar styling */
+    .notes::-webkit-scrollbar {
+      width: 8px;
+      background-color: #ffffff;
+    }
+    .notes::-webkit-scrollbar-thumb {
+      background-color: #cccccc;
+      border-radius: 4px;
+      border: 2px solid #ffffff;
+    }
+    .notes::-webkit-scrollbar-track {
+      background-color: #ffffff;
+    }
+    /* Firefox scrollbar styling */
+    .notes {
+      scrollbar-width: thin;
+      scrollbar-color: #cccccc #ffffff;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h2>Rename Tab</h2>
-    <input type="text" id="tabName" placeholder="Enter new tab name">
-    <button id="saveButton">Save</button>
-    <button id="resetButton">Reset</button>
+    <div class="row">
+      <span class="label">Tab name</span>
+      <input type="text" id="newTabName" class="input" placeholder="Enter tab name">
+    </div>
+    <div class="divider"></div>
+    <div class="row notes-row">
+      <span class="label">Notes</span>
+      <textarea id="notes" class="notes" placeholder="Add notes"></textarea>
+    </div>
   </div>
   <script src="popup.js"></script>
 </body>

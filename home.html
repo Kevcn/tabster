@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tabster - Tab Manager</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo {
+      width: 128px;
+      height: 128px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    h2 {
+      font-size: 1.8em;
+      margin-top: 40px;
+      color: #2c3e50;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .feature-card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .feature-card h3 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .steps {
+      list-style-type: none;
+      padding: 0;
+    }
+    .steps li {
+      background: #f8f9fa;
+      margin: 10px 0;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .steps li strong {
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="images/icon128.png" alt="Tabster Logo" class="logo">
+    <h1>Tabster</h1>
+    <p>A powerful tab manager for your browser</p>
+  </div>
+
+  <h2>Features</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <h3>Custom Tab Names</h3>
+      <p>Rename your tabs to anything you want, making them easier to identify and organize.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Tab Notes</h3>
+      <p>Add detailed notes to your tabs that appear when you hover over them.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Quick Access</h3>
+      <p>Access the renaming feature from anywhere with a right-click or by clicking the extension icon.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Persistent Storage</h3>
+      <p>Your custom tab names and notes persist even after browser restarts.</p>
+    </div>
+  </div>
+
+  <h2>How to Use</h2>
+  <ol class="steps">
+    <li><strong>Quick Access:</strong> Click the Tabster icon in your toolbar or right-click anywhere on the page.</li>
+    <li><strong>Rename Tab:</strong> Enter your desired tab name in the "Tab name" field.</li>
+    <li><strong>Add Notes:</strong> Optionally add notes that will appear when you hover near the tab.</li>
+    <li><strong>Save Changes:</strong> Press Enter to save your changes, or click outside the dialog to cancel.</li>
+    <li><strong>View Notes:</strong> Move your mouse to the top of the window to see your tab notes.</li>
+  </ol>
+</body>
+</html> 
