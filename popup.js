@@ -5,14 +5,17 @@ document.addEventListener('DOMContentLoaded', function() {
   // Get current tab info
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     const currentTab = tabs[0];
-    nameInput.value = currentTab.title;
-    nameInput.select();
-
-    // Get existing notes if any
-    chrome.storage.local.get([currentTab.url], function(result) {
-      if (result[currentTab.url]) {
-        notesInput.value = result[currentTab.url].description || '';
+    
+    // Get existing tab name and notes if any
+    chrome.storage.local.get(['renamedTabs'], function(result) {
+      const renamedTabs = result.renamedTabs || {};
+      if (renamedTabs[currentTab.url]) {
+        nameInput.value = renamedTabs[currentTab.url].title;
+        notesInput.value = renamedTabs[currentTab.url].description || '';
+      } else {
+        nameInput.value = currentTab.title;
       }
+      nameInput.select();
     });
   });
 
@@ -24,64 +27,32 @@ document.addEventListener('DOMContentLoaded', function() {
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         const currentTab = tabs[0];
         
-        // Store the data
-        const data = {};
-        data[currentTab.url] = {
-          title: newTitle,
-          description: description
-        };
-        chrome.storage.local.set(data);
-
-        // Update the tab title and create tooltip
-        chrome.scripting.executeScript({
-          target: { tabId: currentTab.id },
-          func: (info) => {
-            document.title = info.title;
-            
-            // Remove existing tooltip if any
-            const existingTooltip = document.querySelector('.tab-tooltip');
-            if (existingTooltip) {
-              existingTooltip.remove();
-            }
-            
-            // Create new tooltip
-            let tooltip = document.createElement('div');
-            tooltip.className = 'tab-tooltip';
-            tooltip.style.cssText = `
-              position: fixed;
-              top: 0;
-              left: 50%;
-              transform: translateX(-50%);
-              background: #333;
-              color: white;
-              padding: 8px 12px;
-              border-radius: 6px;
-              font-size: 14px;
-              z-index: 2147483647;
-              max-width: 500px;
-              display: none;
-              white-space: normal;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            `;
-            tooltip.textContent = info.description ? `Notes: ${info.description}` : 'No notes';
-            document.body.appendChild(tooltip);
-
-            // Add hover listener
-            document.addEventListener('mousemove', (e) => {
-              if (e.clientY < 40) {
-                tooltip.style.display = 'block';
-              } else {
-                tooltip.style.display = 'none';
-              }
-            });
-          },
-          args: [{
+        // Get existing renamed tabs
+        chrome.storage.local.get(['renamedTabs'], function(result) {
+          const renamedTabs = result.renamedTabs || {};
+          
+          // Update the renamed tabs
+          renamedTabs[currentTab.url] = {
             title: newTitle,
-            description: description
-          }]
+            description: description,
+            lastModified: Date.now()
+          };
+          
+          // Store the updated data
+          chrome.storage.local.set({ renamedTabs }, function() {
+            // Update the current tab title
+            chrome.scripting.executeScript({
+              target: { tabId: currentTab.id },
+              func: (title) => {
+                document.title = title;
+              },
+              args: [newTitle]
+            });
+            
+            // Close the popup
+            window.close();
+          });
         });
-
-        window.close();
       });
     }
   };

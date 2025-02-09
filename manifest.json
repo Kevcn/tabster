@@ -1,13 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Tabster",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Rename your tabs and add notes for better organization",
   "permissions": [
     "activeTab",
     "storage",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",

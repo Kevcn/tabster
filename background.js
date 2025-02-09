@@ -6,6 +6,20 @@ chrome.runtime.onInstalled.addListener(() => {
     type: 'normal',
     contexts: ['all']
   });
+  
+  // Initialize storage if needed
+  chrome.storage.local.get(['renamedTabs'], function(result) {
+    if (!result.renamedTabs) {
+      chrome.storage.local.set({ renamedTabs: {} }, () => {
+        console.log('Initialized empty storage');
+      });
+    } else {
+      console.log('Existing storage found:', result.renamedTabs);
+    }
+  });
+  
+  // Restore any existing tabs
+  restoreRenamedTabs();
 });
 
 // Handle context menu clicks
@@ -271,15 +285,26 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // Handle messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'updateTitle') {
-    const data = {};
-    data[message.url] = {
-      title: message.title,
-      description: message.description
-    };
-    chrome.storage.local.set(data);
+    // Get existing renamed tabs
+    chrome.storage.local.get(['renamedTabs'], function(result) {
+      const renamedTabs = result.renamedTabs || {};
+      
+      // Update the renamed tabs
+      renamedTabs[message.url] = {
+        title: message.title,
+        description: message.description,
+        lastModified: Date.now()
+      };
+      
+      // Store the updated data and log it
+      chrome.storage.local.set({ renamedTabs }, () => {
+        console.log('Updated storage:', renamedTabs);
+      });
+    });
   } else if (message.action === 'getTabInfo') {
-    chrome.storage.local.get([message.url], (result) => {
-      sendResponse(result[message.url] || {});
+    chrome.storage.local.get(['renamedTabs'], (result) => {
+      const renamedTabs = result.renamedTabs || {};
+      sendResponse(renamedTabs[message.url] || {});
     });
     return true; // Required for async response
   }
@@ -287,57 +312,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Handle tab updates
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete') {
-    chrome.storage.local.get([tab.url], function(result) {
-      if (result[tab.url]) {
-        const tabInfo = result[tab.url];
-        
+  if (changeInfo.status === 'complete' && tab.url) {
+    chrome.storage.local.get(['renamedTabs'], function(result) {
+      const renamedTabs = result.renamedTabs || {};
+      if (renamedTabs[tab.url]) {
+        console.log('Restoring tab after update:', tab.url, 'to:', renamedTabs[tab.url].title);
         chrome.scripting.executeScript({
           target: { tabId: tabId },
           func: (info) => {
             document.title = info.title;
             
-            // Remove existing tooltip if any
-            const existingTooltip = document.querySelector('.tab-tooltip');
-            if (existingTooltip) {
-              existingTooltip.remove();
-            }
-            
-            // Add custom tooltip element
-            let tooltip = document.createElement('div');
-            tooltip.className = 'tab-tooltip';  // Add class for easy selection
-            tooltip.style.cssText = `
-              position: fixed;
-              top: 0;
-              left: 50%;
-              transform: translateX(-50%);
-              background: #333;
-              color: white;
-              padding: 8px 12px;
-              border-radius: 6px;
-              font-size: 14px;
-              z-index: 2147483647;
-              max-width: 500px;
-              display: none;
-              white-space: normal;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            `;
-            tooltip.textContent = info.description ? `Notes: ${info.description}` : 'No notes';
-            document.body.appendChild(tooltip);
-
-            // Show tooltip when mouse is near top of window
-            document.addEventListener('mousemove', (e) => {
-              if (e.clientY < 40) {  // Only show when mouse is near the tab bar
-                tooltip.style.display = 'block';
-              } else {
-                tooltip.style.display = 'none';
+            // Restore tooltip if there's a description
+            if (info.description) {
+              // Remove existing tooltip if any
+              const existingTooltip = document.querySelector('.tab-tooltip');
+              if (existingTooltip) {
+                existingTooltip.remove();
               }
-            });
+              
+              // Create new tooltip
+              let tooltip = document.createElement('div');
+              tooltip.className = 'tab-tooltip';
+              tooltip.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #333;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 2147483647;
+                max-width: 500px;
+                display: none;
+                white-space: normal;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+              `;
+              tooltip.textContent = `Notes: ${info.description}`;
+              document.body.appendChild(tooltip);
+
+              // Add hover listener
+              document.addEventListener('mousemove', (e) => {
+                if (e.clientY < 40) {
+                  tooltip.style.display = 'block';
+                } else {
+                  tooltip.style.display = 'none';
+                }
+              });
+            }
           },
-          args: [{
-            title: tabInfo.title,
-            description: tabInfo.description
-          }]
+          args: [renamedTabs[tab.url]]
         }).catch(err => console.log('Script injection failed:', err));
       }
     });
@@ -348,18 +373,149 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.tabs.get(activeInfo.tabId, function(tab) {
     if (tab.url) {
-      chrome.storage.local.get([tab.url], function(result) {
-        if (result[tab.url]) {
-          const tabInfo = result[tab.url];
+      chrome.storage.local.get(['renamedTabs'], function(result) {
+        const renamedTabs = result.renamedTabs || {};
+        if (renamedTabs[tab.url]) {
+          console.log('Restoring activated tab:', tab.url, 'to:', renamedTabs[tab.url].title);
           chrome.scripting.executeScript({
             target: { tabId: activeInfo.tabId },
-            func: (title) => {
-              document.title = title;
+            func: (info) => {
+              document.title = info.title;
+              
+              // Restore tooltip if there's a description
+              if (info.description) {
+                // Remove existing tooltip if any
+                const existingTooltip = document.querySelector('.tab-tooltip');
+                if (existingTooltip) {
+                  existingTooltip.remove();
+                }
+                
+                // Create new tooltip
+                let tooltip = document.createElement('div');
+                tooltip.className = 'tab-tooltip';
+                tooltip.style.cssText = `
+                  position: fixed;
+                  top: 0;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background: #333;
+                  color: white;
+                  padding: 8px 12px;
+                  border-radius: 6px;
+                  font-size: 14px;
+                  z-index: 2147483647;
+                  max-width: 500px;
+                  display: none;
+                  white-space: normal;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                `;
+                tooltip.textContent = `Notes: ${info.description}`;
+                document.body.appendChild(tooltip);
+
+                // Add hover listener
+                document.addEventListener('mousemove', (e) => {
+                  if (e.clientY < 40) {
+                    tooltip.style.display = 'block';
+                  } else {
+                    tooltip.style.display = 'none';
+                  }
+                });
+              }
             },
-            args: [tabInfo.title]
+            args: [renamedTabs[tab.url]]
           }).catch(err => console.log('Script injection failed:', err));
         }
       });
     }
   });
-}); 
+});
+
+// Add a listener for when Chrome starts up
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Chrome started up - restoring tabs...');
+  // Wait a bit for tabs to be fully loaded
+  setTimeout(() => {
+    restoreRenamedTabs();
+  }, 2000);
+});
+
+// Function to restore renamed tabs
+function restoreRenamedTabs() {
+  console.log('Starting tab restoration...');
+  
+  // First verify storage access
+  chrome.storage.local.get(null, function(allData) {
+    console.log('All storage data:', allData);
+    
+    chrome.storage.local.get(['renamedTabs'], function(result) {
+      console.log('Retrieved renamedTabs:', result);
+      const renamedTabs = result.renamedTabs || {};
+      
+      if (Object.keys(renamedTabs).length === 0) {
+        console.log('No renamed tabs found in storage');
+        return;
+      }
+      
+      // Get all tabs
+      chrome.tabs.query({}, (tabs) => {
+        console.log('Found', tabs.length, 'tabs to process');
+        
+        if (tabs.length === 0) {
+          console.log('No tabs found to restore');
+          return;
+        }
+        
+        tabs.forEach(tab => {
+          if (!tab.url) {
+            console.log('Skipping tab with no URL:', tab);
+            return;
+          }
+          
+          if (renamedTabs[tab.url]) {
+            console.log('Attempting to restore tab:', {
+              url: tab.url,
+              currentTitle: tab.title,
+              newTitle: renamedTabs[tab.url].title,
+              tabId: tab.id
+            });
+            
+            chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: (info) => {
+                try {
+                  document.title = info.title;
+                  console.log('Successfully set title to:', info.title);
+                  return true;
+                } catch (err) {
+                  console.error('Error setting title:', err);
+                  return false;
+                }
+              },
+              args: [renamedTabs[tab.url]]
+            }).then(() => {
+              console.log('Script injection completed for tab:', tab.url);
+            }).catch(err => {
+              console.error('Failed to restore tab title:', err);
+              // Try again with a simpler script
+              chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: (title) => { 
+                  try {
+                    document.title = title;
+                    return true;
+                  } catch (err) {
+                    console.error('Error in fallback title set:', err);
+                    return false;
+                  }
+                },
+                args: [renamedTabs[tab.url].title]
+              }).catch(err => console.error('Retry also failed:', err));
+            });
+          } else {
+            console.log('No stored name for tab:', tab.url);
+          }
+        });
+      });
+    });
+  });
+} 
